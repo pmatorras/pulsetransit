@@ -27,7 +27,7 @@ jobs:
         run: |
           git config user.name "tus-bot"
           git config user.email "bot@tus"
-          git add data/tus.db
+          git add -f data/tus.db
           git diff --cached --quiet || git commit -m "data: estimaciones $(date -u +%H:%M)"
           git push
 
@@ -50,6 +50,6 @@ jobs:
         run: |
           git config user.name "tus-bot"
           git config user.email "bot@tus"
-          git add data/tus.db
+          git add -f data/tus.db
           git diff --cached --quiet || git commit -m "data: posiciones $(date -u +%H:%M)"
           git push
