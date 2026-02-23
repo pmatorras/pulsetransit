@@ -32,7 +32,7 @@ jobs:
           git config user.email "bot@tus"
           git add -f data/tus.db
           git diff --cached --quiet || git commit -m "data: estimaciones $(date -u +%H:%M)"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pmatorras/pulsetransit.git
 
   collect-posiciones:
     if: ${{ github.event.schedule == '*/20 6-23 * * *' || github.event_name == 'workflow_dispatch' }}
@@ -55,4 +55,4 @@ jobs:
           git config user.email "bot@tus"
           git add -f data/tus.db
           git diff --cached --quiet || git commit -m "data: posiciones $(date -u +%H:%M)"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pmatorras/pulsetransit.git
