@@ -31,7 +31,7 @@ jobs:
       - name: Collect posiciones every 20 min
         run: |
           MINUTE=$(date -u +%M)
-          if [ $((MINUTE % 20)) -eq 0 ]; then
+          if [ $((MINUTE % 20)) -eq 0 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             PYTHONPATH=src python src/pulsetransit/collector.py posiciones
           else
             echo "Skipping posiciones this run"
