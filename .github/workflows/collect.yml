@@ -22,7 +22,7 @@ jobs:
           path: tus_data.db
           key: tus-db-${{ runner.os }}
           restore-keys: tus-db-
-      - run: python collector.py estimaciones
+      - run: python src/pulsetransit/collector.py estimaciones
       - name: Commit DB update
         run: |
           git config user.name "tus-bot"
@@ -45,7 +45,7 @@ jobs:
           path: tus_data.db
           key: tus-db-${{ runner.os }}
           restore-keys: tus-db-
-      - run: python collector.py posiciones
+      - run: python src/pulsetransit/collector.py posiciones
       - name: Commit DB update
         run: |
           git config user.name "tus-bot"
