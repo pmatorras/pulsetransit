@@ -1,7 +1,6 @@
 # PulseTransit
 
 ![Collector](https://github.com/pmatorras/pulsetransit/actions/workflows/collect.yml/badge.svg)
-![Validate](https://github.com/pmatorras/pulsetransit/actions/workflows/validate.yml/badge.svg)
 
 
 Real-time data pipeline for TUS (Transportes Urbanos de Santander) bus network.

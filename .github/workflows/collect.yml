@@ -53,3 +53,6 @@ jobs:
           name: tus-db
           path: data/tus.db
           retention-days: 2
+          
+      - name: Validate
+        run: PYTHONPATH=src python src/pulsetransit/validate.py
