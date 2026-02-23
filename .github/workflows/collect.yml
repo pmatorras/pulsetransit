@@ -1,18 +1,10 @@
-# .github/workflows/collect.yml
-name: TUS Collector
-
 on:
   schedule:
-    - cron: "*/5 6-23 * * *"   # estimaciones every 5 min, 06:00-23:00 UTC (08:00-00:00 CET)
-    - cron: "*/20 6-23 * * *"  # posiciones every 20 min same window
-  workflow_dispatch:            # allow manual trigger
-
-permissions:
-  contents: write
+    - cron: "*/5 5-23 * * *"
+  workflow_dispatch:
 
 jobs:
-  collect-estimaciones:
-    if: ${{ github.event.schedule == '*/5 6-23 * * *' || github.event_name == 'workflow_dispatch' }}
+  collect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,34 +17,25 @@ jobs:
           path: data/tus.db
           key: tus-db-${{ runner.os }}
           restore-keys: tus-db-
-      - run: PYTHONPATH=src python src/pulsetransit/collector.py estimaciones
-      - name: Commit DB update
-        run: |
-          git config user.name "tus-bot"
-          git config user.email "bot@tus"
-          git add -f data/tus.db
-          git diff --cached --quiet || git commit -m "data: estimaciones $(date -u +%H:%M)"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pmatorras/pulsetransit.git
 
-  collect-posiciones:
-    if: ${{ github.event.schedule == '*/20 6-23 * * *' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Restore DB
-        uses: actions/cache@v4
-        with:
-          path: data/tus.db
-          key: tus-db-${{ runner.os }}
-          restore-keys: tus-db-
-      - run: PYTHONPATH=src python src/pulsetransit/collector.py posiciones
+      - name: Always collect estimaciones
+        run: PYTHONPATH=src python src/pulsetransit/collector.py estimaciones
+
+      - name: Collect posiciones every 20 min
+        run: |
+          MINUTE=$(date -u +%M)
+          if [ $((MINUTE % 20)) -eq 0 ]; then
+            PYTHONPATH=src python src/pulsetransit/collector.py posiciones
+          else
+            echo "Skipping posiciones this run"
+          fi
+
       - name: Commit DB update
         run: |
           git config user.name "tus-bot"
           git config user.email "bot@tus"
           git add -f data/tus.db
-          git diff --cached --quiet || git commit -m "data: posiciones $(date -u +%H:%M)"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pmatorras/pulsetransit.git
+          git diff --cached --quiet || (
+            git commit -m "data: collect $(date -u +%H:%M)" &&
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pmatorras/pulsetransit.git
+          )
