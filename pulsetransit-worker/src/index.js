@@ -1,23 +1,41 @@
 export default {
-	// Manual trigger for debugging
 	async fetch(req, env, ctx) {
-		if (new URL(req.url).pathname === "/trigger") {
+		const url = new URL(req.url);
+		
+		if (url.pathname === "/trigger") {
 			await collectEstimaciones(env);
-			await new Promise(r => setTimeout(r, 1000));  // 1s pause
+			await new Promise(r => setTimeout(r, 1000));
 			await collectPosiciones(env);
 			return new Response("Triggered estimaciones+posiciones");
 		}
+		
+		if (url.pathname === "/health") {
+			const lastEst = await env.DB.prepare(
+				"SELECT MAX(collected_at) as last FROM estimaciones"
+			).first();
+			const lastPos = await env.DB.prepare(
+				"SELECT MAX(collected_at) as last FROM posiciones"
+			).first();
+			
+			return Response.json({
+				status: "ok",
+				last_estimaciones: lastEst?.last,
+				last_posiciones: lastPos?.last
+			});
+		}
+		
 		return new Response("pulsetransit-worker running");
 	},
 
 	async scheduled(event, env, ctx) {
 		if (event.cron === "0 * * * *") {
 			await collectPosiciones(env);
-		} else if (event.cron === "*/5 * * * *") {
+		} else if (event.cron === "*/2 * * * *") {
 			await collectEstimaciones(env);
 		}
 	},
 };
+
 
 async function collectEstimaciones(env) {
 	const url = "https://datos.santander.es/api/rest/datasets/control_flotas_estimaciones.json?rows=5000";

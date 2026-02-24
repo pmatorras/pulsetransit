@@ -10,7 +10,7 @@
   "observability": { "enabled": true },
   "compatibility_flags": ["nodejs_compat"],
   "triggers": {
-    "crons": ["*/5 * * * *", "0 * * * *"]  // estimaciones every 5min, posiciones every hour
+    "crons": ["*/2 * * * *", "0 * * * *"]  // estimaciones every 5min, posiciones every hour
   },
   "d1_databases": [
     {
