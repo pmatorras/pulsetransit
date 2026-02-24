@@ -2,16 +2,18 @@ export default {
 	// Manual trigger for debugging
 	async fetch(req, env, ctx) {
 		if (new URL(req.url).pathname === "/trigger") {
-			await collectEstimaciones(env);  // await directly, don't use waitUntil
-			return new Response("Triggered manually");
+			await collectEstimaciones(env);
+			await new Promise(r => setTimeout(r, 1000));  // 1s pause
+			await collectPosiciones(env);
+			return new Response("Triggered estimaciones+posiciones");
 		}
-		return new Response("pulsetransit-estimaciones worker running");
+		return new Response("pulsetransit-worker running");
 	},
 
 	async scheduled(event, env, ctx) {
 		if (event.cron === "0 * * * *") {
 			await collectPosiciones(env);
-		} else {
+		} else if (event.cron === "*/5 * * * *") {
 			await collectEstimaciones(env);
 		}
 	},
@@ -63,4 +65,36 @@ async function collectEstimaciones(env) {
 	}
 
 	console.log(`[${collectedAt}] estimaciones: ${inserted} new rows from ${rows.length} fetched`);
+}
+
+async function collectPosiciones(env) {
+  const url = "https://datos.santander.es/api/rest/datasets/control_flotas_posiciones.json?rows=5000";
+  const resp = await fetch(url, { signal: AbortSignal.timeout(25000) });
+  if (!resp.ok) throw new Error(`API fetch failed: ${resp.status}`);
+
+  const json = await resp.json();
+  const rows = json.resources ?? [];
+  const collectedAt = new Date().toISOString();
+
+  let inserted = 0;
+  for (const item of rows) {
+    const result = await env.DB.prepare(`
+      INSERT OR IGNORE INTO posiciones
+        (collected_at, instante, vehiculo, linea, lat, lon, velocidad, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      collectedAt,
+      item["ayto:instante"]       ?? null,
+      item["ayto:vehiculo"]       ?? null,
+      item["ayto:linea"]          ?? null,
+      item["wgs84_pos:lat"]       ?? null,
+      item["wgs84_pos:long"]      ?? null,
+      item["ayto:velocidad"]      ?? null,
+      item["ayto:estado"]         ?? null,
+    ).run();
+
+    if (result.meta.changes > 0) inserted++;
+  }
+
+  console.log(`[${collectedAt}] posiciones: ${inserted} new rows from ${rows.length} fetched`);
 }
