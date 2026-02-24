@@ -9,7 +9,11 @@ export default {
 	},
 
 	async scheduled(event, env, ctx) {
-		ctx.waitUntil(collectEstimaciones(env));
+		if (event.cron === "0 * * * *") {
+			await collectPosiciones(env);
+		} else {
+			await collectEstimaciones(env);
+		}
 	},
 };
 
