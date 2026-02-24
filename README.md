@@ -1,5 +1,6 @@
 # PulseTransit
-![Worker Status](https://github.com/pmatorras/pulsetransit/actions/workflows/monitor.yml/badge.svg)
+![Santander TUS Worker](https://github.com/pmatorras/pulsetransit/actions/workflows/monitor.yml/badge.svg)
+
 
 Real-time data pipeline for TUS (Transportes Urbanos de Santander) bus network.
 Collects live vehicle positions and stop-level ETA predictions to build a 
@@ -7,10 +8,25 @@ historical dataset for delay analysis and ML-based prediction.
 
 ## Data Sources
 
-| Endpoint | Dataset | Collection Frequency | API Behavior |
-|---|---|---|---|
-| `control_flotas_estimaciones` | ETA predictions per stop | Every 2 min | Returns current predictions for all stops (~450 stops, ~940 predictions) |
-| `control_flotas_posiciones` | GPS breadcrumbs per vehicle | Every 60 min | Returns cumulative route history for all active vehicles (breadcrumbs every 25s since route start) |
+### Real-time Data (datos.santander.es API)
+
+- **`posiciones`**: GPS positions of buses (lat/lon, timestamp, line, vehicle ID)
+- **`estimaciones_parada`**: Real-time ETAs for each bus-stop pair
+- ~~**`pasos_parada`**: Historical passages (stale since June 2025, not used)~~
+
+### Static Data (NAP - National Access Point)
+
+GTFS static files from [nap.transportes.gob.es](https://nap.transportes.gob.es/Files/Detail/1391):
+
+- **`stops.txt`**: Stop coordinates and metadata (for proximity calculation)
+- **`shapes.txt`**: Detailed route geometries (for GPS map-matching and visualization)
+- **`routes.txt`**: Route names, colors, and metadata
+- **`trips.txt`**: Trip patterns and service IDs
+- **`stop_times.txt`**: Stop sequences and route structure
+- **`calendar_dates.txt`**: Service exceptions (holidays, special schedules)
+
+**Note**: GTFS files are stored in `data/gtfs-static/` (not tracked in git due to size).
+
 
 Source: [datos.santander.es](http://datos.santander.es)
 
