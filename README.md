@@ -1,8 +1,6 @@
 # PulseTransit
 ![Worker Status](https://github.com/pmatorras/pulsetransit/actions/workflows/monitor.yml/badge.svg)
 
-![Collector](https://github.com/pmatorras/pulsetransit/actions/workflows/collect.yml/badge.svg)
-
 Real-time data pipeline for TUS (Transportes Urbanos de Santander) bus network.
 Collects live vehicle positions and stop-level ETA predictions to build a 
 historical dataset for delay analysis and ML-based prediction.
