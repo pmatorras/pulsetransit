@@ -1,0 +1,34 @@
+name: Monitor Worker
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check worker health
+        run: |
+          RESPONSE=$(curl -s https://pulsetransit-worker.pablo-matorras.workers.dev/health)
+          echo "Worker response: $RESPONSE"
+          
+          LAST_EST=$(echo $RESPONSE | jq -r '.last_estimaciones')
+          LAST_POS=$(echo $RESPONSE | jq -r '.last_posiciones')
+          
+          # Check if estimaciones is recent (within 10 minutes)
+          EST_AGE=$(($(date +%s) - $(date -d "$LAST_EST" +%s)))
+          if [ $EST_AGE -gt 600 ]; then
+            echo "ERROR: Estimaciones data is stale (${EST_AGE}s old)"
+            exit 1
+          fi
+          
+          # Check if posiciones is recent (within 2 hours)
+          POS_AGE=$(($(date +%s) - $(date -d "$LAST_POS" +%s)))
+          if [ $POS_AGE -gt 7200 ]; then
+            echo "ERROR: Posiciones data is stale (${POS_AGE}s old)"
+            exit 1
+          fi
+          
+          echo "✓ Worker is healthy"
