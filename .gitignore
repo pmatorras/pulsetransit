@@ -1,7 +1,8 @@
-# Data — never commit
-data/
+# Data — only commit static info
 *.db
 *.csv
+!data/gtfs-static/
+!data/gtfs-static/*.txt
 
 # Python
 __pycache__/
@@ -19,3 +20,4 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
