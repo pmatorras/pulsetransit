@@ -23,6 +23,46 @@ export default {
 				last_posiciones: lastPos?.last
 			});
 		}
+		if (url.pathname === "/badge") {
+			const lastEst = await env.DB.prepare(
+				"SELECT MAX(collected_at) as last FROM estimaciones"
+			).first();
+
+			const now = new Date();
+			const lastTime = lastEst?.last ? new Date(lastEst.last) : null;
+			const ageSeconds = lastTime ? Math.floor((now - lastTime) / 1000) : Infinity;
+			const hourUTC = now.getUTCHours();
+			const inServiceHours = hourUTC >= 5 && hourUTC < 23; // 6am-midnight CET
+
+			let message, color;
+
+			if (!lastTime) {
+				message = "no data";
+				color = "lightgrey";
+			} else if (inServiceHours && ageSeconds > 1800) {
+				message = `stale ${Math.floor(ageSeconds / 60)}m`;
+				color = "red";
+			} else if (inServiceHours && ageSeconds > 600) {
+				message = `stale ${Math.floor(ageSeconds / 60)}m`;
+				color = "yellow";
+			} else if (!inServiceHours) {
+				message = "off hours";
+				color = "blue";
+			} else {
+				message = "live";
+				color = "brightgreen";
+			}
+
+			return Response.json({
+				schemaVersion: 1,
+				label: "TUS worker",
+				message,
+				color
+			}, {
+				headers: { "Cache-Control": "no-cache, max-age=0" }
+			});
+		}
+
 		
 		return new Response("pulsetransit-worker running");
 	},

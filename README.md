@@ -1,5 +1,5 @@
 # PulseTransit
-![Santander TUS Worker](https://github.com/pmatorras/pulsetransit/actions/workflows/monitor.yml/badge.svg)
+![Worker Status](https://img.shields.io/endpoint?url=https://pulsetransit-worker.pablo-matorras.workers.dev/badge&cacheSeconds=60)
 
 
 Real-time data pipeline for TUS (Transportes Urbanos de Santander) bus network.
