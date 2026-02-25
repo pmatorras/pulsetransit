@@ -88,6 +88,7 @@ def build_map(
     shapes: pd.DataFrame | None = None,
     trips: pd.DataFrame | None = None,
     routes: pd.DataFrame | None = None,
+    highlight_stop_id: int | None = None,
 ) -> go.Figure:
     fig = go.Figure()
 
@@ -136,32 +137,73 @@ def build_map(
         ))
 
     if stops is not None:
-        # Dark border layer
-        fig.add_trace(go.Scattermap(
-            lat=stops["stop_lat"],
-            lon=stops["stop_lon"],
-            mode="markers",
-            marker=dict(size=10, color="#333", opacity=0.8),
-            hoverinfo="skip",
-            showlegend=False,
-        ))
-        # Visible inner circle
-        fig.add_trace(go.Scattermap(
-            lat=stops["stop_lat"],
-            lon=stops["stop_lon"],
-            mode="markers",
-            marker=dict(size=7, color="lightgray", opacity=1.0),
-            text=stops["stop_name"],
-            hovertemplate="<b>%{text}</b><br>(%{lat:.4f}, %{lon:.4f})<extra></extra>",
-            name="Stops",
-        ))
+        # Separate highlighted stop from others
+        if highlight_stop_id is not None:
+            regular_stops = stops[stops["stop_id"] != highlight_stop_id]
+            highlighted = stops[stops["stop_id"] == highlight_stop_id]
+        else:
+            regular_stops = stops
+            highlighted = pd.DataFrame()
+
+        if not regular_stops.empty:
+            # Dark border layer
+            fig.add_trace(go.Scattermap(
+                lat=regular_stops["stop_lat"],
+                lon=regular_stops["stop_lon"],
+                mode="markers",
+                marker=dict(size=10, color="#333333", opacity=0.8),
+                hoverinfo="skip",
+                showlegend=False,
+            ))
+            # Visible inner circle
+            fig.add_trace(go.Scattermap(
+                lat=regular_stops["stop_lat"],
+                lon=regular_stops["stop_lon"],
+                mode="markers",
+                marker=dict(size=7, color="#B8B6B6", opacity=1.0),
+                text=regular_stops["stop_id"].astype(str) + " - " + regular_stops["stop_name"],
+                hovertemplate="<b>%{text}</b><extra></extra>",  # ← simplified
+                name="Stops",
+            ))
+# Highlighted stop (larger, bright color)
+        if not highlighted.empty:
+            fig.add_trace(go.Scattermap(
+                lat=highlighted["stop_lat"],
+                lon=highlighted["stop_lon"],
+                mode="markers",
+                marker=dict(size=16, color="#FF4444", opacity=0.9),
+                hoverinfo="skip",
+                showlegend=False,
+            ))
+            fig.add_trace(go.Scattermap(
+                lat=highlighted["stop_lat"],
+                lon=highlighted["stop_lon"],
+                mode="markers",
+                marker=dict(size=12, color="white", opacity=1.0),
+                text=highlighted["stop_id"].astype(str) + " - " + highlighted["stop_name"],
+                hovertemplate="<b>%{text}</b><extra></extra>",
+                name="Selected Stop",
+            ))
+            
+            # Zoom to highlighted stop
+            center = dict(
+                lat=highlighted["stop_lat"].iloc[0],
+                lon=highlighted["stop_lon"].iloc[0]
+            )
+            zoom = 16  # Closer zoom
+        else:
+            center = SANTANDER
+            zoom = 13
+    else:
+        center = SANTANDER
+        zoom = 13
 
 
     fig.update_layout(
         map=dict(
             style="open-street-map",
-            center=SANTANDER,
-            zoom=13,
+            center=center,
+            zoom=zoom,
         ),
         legend=dict(bgcolor="rgba(255,255,255,0.8)", borderwidth=1),
         margin=dict(l=0, r=0, t=0, b=0),
