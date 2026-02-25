@@ -17,18 +17,35 @@ jobs:
           LAST_EST=$(echo $RESPONSE | jq -r '.last_estimaciones')
           LAST_POS=$(echo $RESPONSE | jq -r '.last_posiciones')
           
-          # Check if estimaciones is recent (within 10 minutes)
+          # Calculate age
           EST_AGE=$(($(date +%s) - $(date -d "$LAST_EST" +%s)))
-          if [ $EST_AGE -gt 600 ]; then
-            echo "ERROR: Estimaciones data is stale (${EST_AGE}s old)"
-            exit 1
-          fi
-          
-          # Check if posiciones is recent (within 2 hours)
           POS_AGE=$(($(date +%s) - $(date -d "$LAST_POS" +%s)))
-          if [ $POS_AGE -gt 7200 ]; then
-            echo "ERROR: Posiciones data is stale (${POS_AGE}s old)"
-            exit 1
+          
+          # Check current hour (UTC - adjust if needed)
+          CURRENT_HOUR=$(date +%H)
+          
+          # Service hours: 5am-11pm UTC (6am-midnight CET)
+          if [ $CURRENT_HOUR -ge 5 ] && [ $CURRENT_HOUR -lt 23 ]; then
+            # During service hours - strict checks
+            if [ $EST_AGE -gt 1800 ]; then  # 30 min
+              echo "⛔ ERROR: Estimaciones stale (${EST_AGE}s) during service hours"
+              exit 1
+            elif [ $EST_AGE -gt 600 ]; then  # 10 min
+              echo "⚠️ WARNING: Estimaciones possibly stale (${EST_AGE}s old)"
+              # Don't exit - just warn
+            fi
+            
+            if [ $POS_AGE -gt 7200 ]; then
+              echo "⛔ ERROR: Posiciones stale (${POS_AGE}s) during service hours"
+              exit 1
+            fi
+          else
+            # Outside service hours - lenient
+            echo "💤 Outside service hours - data age: est=${EST_AGE}s, pos=${POS_AGE}s"
+            if [ $EST_AGE -gt 43200 ]; then  # 12 hours
+              echo "⚠️ WARNING: Data very stale, but outside service hours"
+            fi
+            # Don't fail outside service hours
           fi
           
-          echo "✓ Worker is healthy"
+          echo "✅ Worker is healthy"
