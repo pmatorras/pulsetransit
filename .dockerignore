@@ -1,0 +1,5 @@
+.git
+.github
+pulsetransit-worker/
+__pycache__/
+*.pyc
