@@ -8,33 +8,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # Merge the YAML metadata with the README
-      - name: Prepare README for Hugging Face
+      - name: Deploy to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          # 1. Create a clean temporary directory
+          mkdir /tmp/hf_deploy
+          
+          # 2. Copy all files EXCEPT the .git folder and the DB files
+          rsync -av --exclude='.git' --exclude='data/*.db' ./ /tmp/hf_deploy/
+          
+          # 3. Go into the clean directory
+          cd /tmp/hf_deploy
+          
+          # 4. Merge the README with the HF metadata
           cat hf_space_metadata.yml > hf_readme.md
           echo "" >> hf_readme.md
           cat README.md >> hf_readme.md
           mv hf_readme.md README.md
           
-      - name: Ignore DB files for HF push
-        run: |
-          # Stop tracking the DB file in this temporary Git index
-          git rm --cached data/tus.db || true
+          # 5. Initialize a brand new git repo (NO HISTORY)
+          git init
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
           
-          # Add rule to ignore DB files on HF
-          echo "*.db" >> .gitignore
-          echo "data/tus.db" >> .gitignore
-      # Push master branch to Hugging Face's main branch
-      - name: Push to Hugging Face
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git add README.md
-          git commit -m "Merge HF metadata into README" || echo "No changes to commit"
-          # Push local 'master' to remote 'main' on HF
-          git push -f https://pmatorras:$HF_TOKEN@huggingface.co/spaces/pmatorras/pulsetransit master:main
+          # 6. Commit the current state
+          git add .
+          git commit -m "Deploy from GitHub Actions"
+          
+          # 7. Force push to the 'main' branch on Hugging Face
+          git push -f https://pmatorras:$HF_TOKEN@huggingface.co/spaces/pmatorras/pulsetransit HEAD:main
