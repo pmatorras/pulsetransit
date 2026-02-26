@@ -1,6 +1,5 @@
 name: Deploy Dashboard to HF Space
 
-# This single line is what creates the "Run workflow" button in GitHub
 on:
   workflow_dispatch:
 
@@ -10,6 +9,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Sync with Hugging Face Space
         uses: alex-bene/huggingface-space-sync-action@v0.1
@@ -17,6 +18,6 @@ jobs:
           github_repo_id: 'pmatorras/pulsetransit'
           github_branch: 'master'
           yaml_header_path: 'hf_space_metadata.yml'
-          huggingface_repo_id: 'pmatorras/YOUR_SPACE_NAME' 
+          huggingface_repo_id: 'pmatorras/pulsetransit' 
           hf_username: 'pmatorras' 
           hf_token: ${{ secrets.HF_TOKEN }}
