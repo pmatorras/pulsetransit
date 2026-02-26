@@ -1,7 +1,7 @@
 LANG = {
     "en": {
-        "title": "TUS Tracker",
-        "subtitle": "Real-time bus monitoring",
+        "title": "TUS Santander Tracker",
+        "subtitle": "Public transport network visualization",
         "browse_tab": "Browse",
         "plan_tab": "Plan",
         "search_stop": "Search stop",
@@ -18,13 +18,13 @@ LANG = {
         "plan_trip": "Plan Your Trip",
         "query_time": "Query time",
         "query_time_help": "Show schedules for this time of day",
-        "coming_soon": "Trip planning features coming soon!",
+        "coming_soon": " COMING SOON: \n - 📍 Live bus positions, \n - ⏱️ Real-time arrival predictions (estimaciones), and \n3) 💻 ML-enhanced predictions (currently collecting training data)",
         "stops":"Stops",
         "selected_stop": "Selected Stop"
     },
     "es": {
-        "title": "TUS Tracker",
-        "subtitle": "Monitor de autobuses en tiempo real",
+        "title": "TUS Santander Tracker",
+        "subtitle": "Visualización de la red de transporte público",
         "browse_tab": "Explorar",
         "plan_tab": "Planificar",
         "search_stop": "Buscar parada",
@@ -41,7 +41,7 @@ LANG = {
         "plan_trip": "Planifica tu Viaje",
         "query_time": "Hora de consulta",
         "query_time_help": "Mostrar horarios para esta hora del día",
-        "coming_soon": "¡próximamente -> fundionalidades de planificación!",
+        "coming_soon": " PRÓXIMAMENTE:\n - 📍 Posiciones en vivo de autobuses, \n - ⏱️ Predicciones de llegada en tiempo real (estimaciones), \n - 💻 Predicciones mejoradas con ML (actualmente recopilando datos de entrenamiento)",
         "stops":"Paradas",
         "selected_stop": "Parada Seleccionada"
    
