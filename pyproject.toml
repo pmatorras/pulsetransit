@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulsetransit"
-version = "0.2.0"
+version = "0.4.0"
 description = "TUS Santander bus data pipeline and delay prediction"
 readme = "README.md"
 dependencies = [

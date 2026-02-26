@@ -87,8 +87,19 @@ if default_lang not in ["en", "es"]:
 #Page config and language selector
 st.set_page_config(page_title="PulseTransit - Santander TUS", layout="wide", page_icon="🚌")
 
+st.markdown("""
+    <style>
+    
+    /* Ensure the markdown (subtitle) doesn't have its own bottom margin */
+    .stMarkdown div p { margin-bottom: 0.5rem !important; }
+    
+    /* Optional: fine-tune tab list position */
+    .stTabs [data-baseweb="tab-list"] { margin-top: -2.0rem !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Language selector in header (Meteomat style)
-col1, col2 = st.columns([6, 1])
+col1, col2 = st.columns([6, 1], vertical_alignment="top")
 with col2:
     default_idx = 0 if default_lang == "en" else 1
     lang = st.selectbox("🌐", ["🇬🇧 EN", "🇪🇸 ES"], index=default_idx, label_visibility="collapsed", key="lang_selector")
@@ -103,7 +114,8 @@ t = LANG[lang_code]
 
 with col1:
     st.title(f"🚌 {t['title']}")
-    st.markdown(f"**{t['subtitle']}** · Santander, España")
+    st.markdown(f"**{t['subtitle']}** · Santander, España", unsafe_allow_html=True)
+
 
 # Load GTFS data
 stops = load_stops()
@@ -126,13 +138,13 @@ except:
 
 
 # TABS: Browse vs Plan
-tab_browse, tab_plan = st.tabs([f"📅 {t["browse_tab"]}", f"🚏 {t["plan_tab"]}"])
+tab_browse, tab_plan = st.tabs([f"📅 {t['browse_tab']}", f"🚏 {t['plan_tab']}"])
 
 with tab_browse:
     # SEARCH ABOVE MAP
     stops["search_label"] = stops["stop_id"].astype(str) + " - " + stops["stop_name"]
     stop_options = [""] + stops["search_label"].tolist()
-    st.info(f"👆 {t["click_info"]}")
+    st.info(f"👆 {t['click_info']}")
 
     selected_stop_label = st.selectbox(
         t["search_stop"],
@@ -186,5 +198,4 @@ with tab_plan:
         value=datetime.now().time(),
         help="Show schedules for this time of day"
     )
-
     st.info(t["coming_soon"])
