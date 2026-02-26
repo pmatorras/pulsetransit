@@ -18,7 +18,15 @@ jobs:
           echo "" >> hf_readme.md
           cat README.md >> hf_readme.md
           mv hf_readme.md README.md
-
+          
+      - name: Ignore DB files for HF push
+        run: |
+          # Stop tracking the DB file in this temporary Git index
+          git rm --cached data/tus.db || true
+          
+          # Add rule to ignore DB files on HF
+          echo "*.db" >> .gitignore
+          echo "data/tus.db" >> .gitignore
       # Push master branch to Hugging Face's main branch
       - name: Push to Hugging Face
         env:
