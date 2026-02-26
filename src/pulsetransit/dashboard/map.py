@@ -1,7 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 from pathlib import Path
-
+from pulsetransit.cfg.config import LANG
 SANTANDER = dict(lat=43.4623, lon=-3.8099)
 GTFS_DIR = Path("data/gtfs-static")
 
@@ -32,19 +32,59 @@ def _build_shape_colors(trips: pd.DataFrame, routes: pd.DataFrame) -> dict:
 def _shapes_to_lines_colored(
     shapes: pd.DataFrame,
     shape_colors: dict,
+    lang_code: str,
 ) -> list[dict]:
-    """One trace per route color group, with None separators within each."""
-    color_groups: dict[str, dict] = {}
+    """One trace per route, with None separators within each."""
+    route_groups: dict[str, dict] = {}
+    t = LANG[lang_code]
+    
     for shape_id, group in shapes.groupby("shape_id", sort=False):
-        info = shape_colors.get(shape_id, {"route_short_name": "?", "color": "#888888"})
+        info = shape_colors.get(shape_id)
+        if info is None:
+            continue
+        
         color = info["color"]
         name = info["route_short_name"]
-        if color not in color_groups:
-            color_groups[color] = {"name": f"Line {name}", "lats": [], "lons": []}
+        if name == "99": continue # remove 99 lanzadera from list
+        # Group by route NAME (not color)
+        if name not in route_groups:
+            route_groups[name] = {
+                "name": f"{t['line']} {name}",
+                "color": color,
+                "lats": [],
+                "lons": []
+            }
+        
         pts = group.sort_values("shape_pt_sequence")
-        color_groups[color]["lats"].extend(pts["shape_pt_lat"].tolist() + [None])
-        color_groups[color]["lons"].extend(pts["shape_pt_lon"].tolist() + [None])
-    return [{"color": c, **v} for c, v in color_groups.items()]
+        route_groups[name]["lats"].extend(pts["shape_pt_lat"].tolist() + [None])
+        route_groups[name]["lons"].extend(pts["shape_pt_lon"].tolist() + [None])
+    
+    # Sort: LC first, then by route number
+    def sort_key(item):
+        name_key, data = item
+        
+        if name_key == "LC":
+            return (0, 0, "")
+        
+        if name_key[0].isdigit():
+            num_part = ""
+            for char in name_key:
+                if char.isdigit():
+                    num_part += char
+                else:
+                    break
+            
+            if num_part == name_key:
+                return (1, int(num_part), "")
+            else:
+                suffix = name_key[len(num_part):]
+                return (1, int(num_part), suffix)
+        
+        return (2, 0, name_key)
+    
+    sorted_groups = sorted(route_groups.items(), key=sort_key)
+    
+    return [{"color": v["color"], "name": v["name"], "lats": v["lats"], "lons": v["lons"]} for k, v in sorted_groups]
 
 def _extract_arrow_points(shapes: pd.DataFrame, shape_colors: dict, interval: int = 15) -> list[dict]:
     """Extract evenly-spaced arrow markers along each shape."""
@@ -89,6 +129,7 @@ def build_map(
     trips: pd.DataFrame | None = None,
     routes: pd.DataFrame | None = None,
     highlight_stop_id: int | None = None,
+    lang_code: str = 'es',
 ) -> go.Figure:
     fig = go.Figure()
 
@@ -96,7 +137,7 @@ def build_map(
         shape_colors = _build_shape_colors(trips, routes)
         
         # Route lines
-        for trace in _shapes_to_lines_colored(shapes, shape_colors):
+        for trace in _shapes_to_lines_colored(shapes, shape_colors, lang_code):
             fig.add_trace(go.Scattermap(
                 lat=trace["lats"],
                 lon=trace["lons"],
@@ -135,7 +176,7 @@ def build_map(
             line=dict(width=3, color="#888888"),
             hoverinfo="skip", name="Routes",
         ))
-
+    t= LANG["es"]
     if stops is not None:
         # Separate highlighted stop from others
         if highlight_stop_id is not None:
@@ -163,7 +204,7 @@ def build_map(
                 marker=dict(size=7, color="#B8B6B6", opacity=1.0),
                 text=regular_stops["stop_id"].astype(str) + " - " + regular_stops["stop_name"],
                 hovertemplate="<b>%{text}</b><extra></extra>",  # ← simplified
-                name="Stops",
+                name=t["stops"],
             ))
 # Highlighted stop (larger, bright color)
         if not highlighted.empty:
@@ -182,7 +223,7 @@ def build_map(
                 marker=dict(size=12, color="white", opacity=1.0),
                 text=highlighted["stop_id"].astype(str) + " - " + highlighted["stop_name"],
                 hovertemplate="<b>%{text}</b><extra></extra>",
-                name="Selected Stop",
+                name=t["selected_stop"],
             ))
             
             # Zoom to highlighted stop
