@@ -4,20 +4,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Sync with Hugging Face Space
-        uses: alex-bene/huggingface-space-sync-action@v0.1
-        with:
-          github_repo_id: 'pmatorras/pulsetransit'
-          github_branch: 'master'
-          yaml_header_path: 'hf_space_metadata.yml'
-          huggingface_repo_id: 'pmatorras/pulsetransit' 
-          hf_username: 'pmatorras' 
-          hf_token: ${{ secrets.HF_TOKEN }}
+      # Merge the YAML metadata with the README
+      - name: Prepare README for Hugging Face
+        run: |
+          cat hf_space_metadata.yml > hf_readme.md
+          echo "" >> hf_readme.md
+          cat README.md >> hf_readme.md
+          mv hf_readme.md README.md
+
+      # Push master branch to Hugging Face's main branch
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add README.md
+          git commit -m "Merge HF metadata into README" || echo "No changes to commit"
+          # Push local 'master' to remote 'main' on HF
+          git push -f https://pmatorras:$HF_TOKEN@huggingface.co/spaces/pmatorras/pulsetransit master:main
