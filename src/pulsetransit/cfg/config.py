@@ -18,7 +18,9 @@ LANG = {
         "plan_trip": "Plan Your Trip",
         "query_time": "Query time",
         "query_time_help": "Show schedules for this time of day",
-        "coming_soon": "Trip planning features coming soon!"
+        "coming_soon": "Trip planning features coming soon!",
+        "stops":"Stops",
+        "selected_stop": "Selected Stop"
     },
     "es": {
         "title": "TUS Tracker",
@@ -39,6 +41,9 @@ LANG = {
         "plan_trip": "Planifica tu Viaje",
         "query_time": "Hora de consulta",
         "query_time_help": "Mostrar horarios para esta hora del día",
-        "coming_soon": "¡próximamente -> fundionalidades de planificación!"
+        "coming_soon": "¡próximamente -> fundionalidades de planificación!",
+        "stops":"Paradas",
+        "selected_stop": "Parada Seleccionada"
+   
     }
 }

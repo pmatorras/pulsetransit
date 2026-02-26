@@ -13,6 +13,43 @@ from pulsetransit.dashboard.map import (
 from pulsetransit.dashboard.schedules import get_next_departures
 from pulsetransit.cfg.config import LANG
 
+def render_interactive_map(stops, shapes, trips, routes, highlight_stop_id=None, lang_code='es'):
+    """Render map and handle click interactions"""
+    fig = build_map(
+        stops=stops, 
+        shapes=shapes, 
+        trips=trips, 
+        routes=routes,
+        highlight_stop_id=highlight_stop_id,
+        lang_code=lang_code
+    )
+
+    selected_point = st.plotly_chart(
+        fig,
+        width='stretch',
+        on_select="rerun",
+        selection_mode="points",
+        key="transit_map",
+    )
+
+    if selected_point and "selection" in selected_point:
+        points = selected_point["selection"].get("points", [])
+        if points:
+            point = points[0]
+            clicked_lat = point["lat"]
+            clicked_lon = point["lon"]
+
+            stops["dist"] = (
+                (stops["stop_lat"] - clicked_lat) ** 2 +
+                (stops["stop_lon"] - clicked_lon) ** 2
+            )
+            nearest_stop = stops.loc[stops["dist"].idxmin()]
+            new_stop_id = int(nearest_stop["stop_id"])
+
+            if new_stop_id != st.session_state.clicked_stop_id:
+                st.session_state.clicked_stop_id = new_stop_id
+                st.rerun()
+
 def display_stop_schedule(active_stop_id, stops, t):
     """Display schedule for a given stop"""
     st.subheader(t["scheduled_departures"])
@@ -121,43 +158,8 @@ with tab_browse:
         # Mobile: Schedules FIRST, then map
         if active_stop_id: display_stop_schedule(active_stop_id, stops, t)
 
-        # -----------------------
         # Map schedules on mobile
-        # -----------------------
-        fig = build_map(
-            stops=stops, 
-            shapes=shapes, 
-            trips=trips, 
-            routes=routes,
-            highlight_stop_id=active_stop_id
-        )
-
-        selected_point = st.plotly_chart(
-            fig,
-            width='stretch',
-            on_select="rerun",
-            selection_mode="points",
-            key="transit_map",
-        )
-
-        # Process clicks
-        if selected_point and "selection" in selected_point:
-            points = selected_point["selection"].get("points", [])
-            if points:
-                point = points[0]
-                clicked_lat = point["lat"]
-                clicked_lon = point["lon"]
-
-                stops["dist"] = (
-                    (stops["stop_lat"] - clicked_lat) ** 2 +
-                    (stops["stop_lon"] - clicked_lon) ** 2
-                )
-                nearest_stop = stops.loc[stops["dist"].idxmin()]
-                new_stop_id = int(nearest_stop["stop_id"])
-
-                if new_stop_id != st.session_state.clicked_stop_id:
-                    st.session_state.clicked_stop_id = new_stop_id
-                    st.rerun()
+        render_interactive_map(stops, shapes, trips, routes, highlight_stop_id=active_stop_id, lang_code=lang_code)
 
     else:
         # Desktop: Full-width map until stop is selected
@@ -166,83 +168,18 @@ with tab_browse:
             col1, col2 = st.columns([2, 1])
 
             with col1:
-                fig = build_map(
-                    stops=stops, 
-                    shapes=shapes, 
-                    trips=trips, 
-                    routes=routes,
-                    highlight_stop_id=active_stop_id
-                )
-
-                selected_point = st.plotly_chart(
-                    fig,
-                    width='stretch',
-                    on_select="rerun",
-                    selection_mode="points",
-                    key="transit_map",
-                )
-
-                if selected_point and "selection" in selected_point:
-                    points = selected_point["selection"].get("points", [])
-                    if points:
-                        point = points[0]
-                        clicked_lat = point["lat"]
-                        clicked_lon = point["lon"]
-
-                        stops["dist"] = (
-                            (stops["stop_lat"] - clicked_lat) ** 2 +
-                            (stops["stop_lon"] - clicked_lon) ** 2
-                        )
-                        nearest_stop = stops.loc[stops["dist"].idxmin()]
-                        new_stop_id = int(nearest_stop["stop_id"])
-
-                        if new_stop_id != st.session_state.clicked_stop_id:
-                            st.session_state.clicked_stop_id = new_stop_id
-                            st.rerun()
+                render_interactive_map(stops, shapes, trips, routes, highlight_stop_id=active_stop_id, lang_code=lang_code)
 
             with col2:
                 display_stop_schedule(active_stop_id, stops, t)
 
         else:
-
-            fig = build_map(
-                stops=stops, 
-                shapes=shapes, 
-                trips=trips, 
-                routes=routes,
-                highlight_stop_id=None
-            )
-
-            selected_point = st.plotly_chart(
-                fig,
-                width='stretch',
-                on_select="rerun",
-                selection_mode="points",
-                key="transit_map",
-            )
-
-            if selected_point and "selection" in selected_point:
-                points = selected_point["selection"].get("points", [])
-                if points:
-                    point = points[0]
-                    clicked_lat = point["lat"]
-                    clicked_lon = point["lon"]
-
-                    stops["dist"] = (
-                        (stops["stop_lat"] - clicked_lat) ** 2 +
-                        (stops["stop_lon"] - clicked_lon) ** 2
-                    )
-                    nearest_stop = stops.loc[stops["dist"].idxmin()]
-                    new_stop_id = int(nearest_stop["stop_id"])
-
-                    if new_stop_id != st.session_state.clicked_stop_id:
-                        st.session_state.clicked_stop_id = new_stop_id
-                        st.rerun()
+            render_interactive_map(stops, shapes, trips, routes, highlight_stop_id=None , lang_code=lang_code)
 
 with tab_plan:
     st.subheader(t["plan_trip"])
 
-    # Query time moved to Plan tab
+    # Query time
     query_time = st.time_input(
         t["query_time"],
         value=datetime.now().time(),

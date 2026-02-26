@@ -1,7 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 from pathlib import Path
-
+from pulsetransit.cfg.config import LANG
 SANTANDER = dict(lat=43.4623, lon=-3.8099)
 GTFS_DIR = Path("data/gtfs-static")
 
@@ -32,15 +32,17 @@ def _build_shape_colors(trips: pd.DataFrame, routes: pd.DataFrame) -> dict:
 def _shapes_to_lines_colored(
     shapes: pd.DataFrame,
     shape_colors: dict,
+    lang_code: str,
 ) -> list[dict]:
     """One trace per route color group, with None separators within each."""
     color_groups: dict[str, dict] = {}
+    t= LANG[lang_code]
     for shape_id, group in shapes.groupby("shape_id", sort=False):
         info = shape_colors.get(shape_id, {"route_short_name": "?", "color": "#888888"})
         color = info["color"]
         name = info["route_short_name"]
         if color not in color_groups:
-            color_groups[color] = {"name": f"Line {name}", "lats": [], "lons": []}
+            color_groups[color] = {"name": f"{t["line"]} {name}", "lats": [], "lons": []}
         pts = group.sort_values("shape_pt_sequence")
         color_groups[color]["lats"].extend(pts["shape_pt_lat"].tolist() + [None])
         color_groups[color]["lons"].extend(pts["shape_pt_lon"].tolist() + [None])
@@ -89,6 +91,7 @@ def build_map(
     trips: pd.DataFrame | None = None,
     routes: pd.DataFrame | None = None,
     highlight_stop_id: int | None = None,
+    lang_code: str = 'es',
 ) -> go.Figure:
     fig = go.Figure()
 
@@ -96,7 +99,7 @@ def build_map(
         shape_colors = _build_shape_colors(trips, routes)
         
         # Route lines
-        for trace in _shapes_to_lines_colored(shapes, shape_colors):
+        for trace in _shapes_to_lines_colored(shapes, shape_colors, lang_code):
             fig.add_trace(go.Scattermap(
                 lat=trace["lats"],
                 lon=trace["lons"],
@@ -135,7 +138,7 @@ def build_map(
             line=dict(width=3, color="#888888"),
             hoverinfo="skip", name="Routes",
         ))
-
+    t= LANG["es"]
     if stops is not None:
         # Separate highlighted stop from others
         if highlight_stop_id is not None:
@@ -163,7 +166,7 @@ def build_map(
                 marker=dict(size=7, color="#B8B6B6", opacity=1.0),
                 text=regular_stops["stop_id"].astype(str) + " - " + regular_stops["stop_name"],
                 hovertemplate="<b>%{text}</b><extra></extra>",  # ← simplified
-                name="Stops",
+                name=t["stops"],
             ))
 # Highlighted stop (larger, bright color)
         if not highlighted.empty:
@@ -182,7 +185,7 @@ def build_map(
                 marker=dict(size=12, color="white", opacity=1.0),
                 text=highlighted["stop_id"].astype(str) + " - " + highlighted["stop_name"],
                 hovertemplate="<b>%{text}</b><extra></extra>",
-                name="Selected Stop",
+                name=t["selected_stop"],
             ))
             
             # Zoom to highlighted stop
