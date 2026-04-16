@@ -64,7 +64,7 @@ data/
 ## Roadmap
 
 - [x] Data collection pipeline (GPS + ETA)
-- [ ] GTFS static feed integration (stop geometries, scheduled timetables)
+- [x] GTFS static feed integration (stop geometries, scheduled timetables)
 - [ ] Delay computation (predicted vs actual arrival)
 - [ ] Weather feature enrichment (via meteomat)
 - [ ] ML delay prediction model
