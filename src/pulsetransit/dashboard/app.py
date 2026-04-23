@@ -2,6 +2,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("Europe/Madrid")
 from pathlib import Path
 
 from pulsetransit.dashboard.map import (
@@ -59,7 +62,7 @@ def display_stop_schedule(active_stop_id, stops, t):
 
     st.markdown(f"**{active_stop_id} - {stop_name}**")
 
-    reference_dt = datetime.now()
+    reference_dt = datetime.now(tz=TZ)
     departures = get_next_departures(active_stop_id, reference_dt, limit=10)
 
     if not departures.empty:
@@ -195,7 +198,7 @@ with tab_plan:
     # Query time
     query_time = st.time_input(
         t["query_time"],
-        value=datetime.now().time(),
+        value=datetime.now(tz=TZ).time(),
         help="Show schedules for this time of day"
     )
     st.info(t["coming_soon"])
