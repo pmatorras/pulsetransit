@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 GTFS_DIR = Path("data/gtfs-static")
 
@@ -15,6 +15,12 @@ def load_routes() -> pd.DataFrame:
 
 def load_calendar_dates() -> pd.DataFrame:
     return pd.read_csv(GTFS_DIR / "calendar_dates.txt")
+
+def get_feed_end_date() -> date:
+    """Last date with active service in the GTFS feed."""
+    calendar = load_calendar_dates()
+    last = calendar.loc[calendar["exception_type"] == 1, "date"].max()
+    return datetime.strptime(str(last), "%Y%m%d").date()
 
 
 def _parse_gtfs_time(time_str: str) -> int:
@@ -62,7 +68,8 @@ def get_next_departures(
     stop_schedule = stop_schedule[stop_schedule["service_id"].isin(active_services)]
     
     # Convert times to minutes since midnight
-    stop_schedule["departure_minutes"] = stop_schedule["departure_time"].apply(_parse_gtfs_time)
+    # astype: an empty frame keeps the str dtype after apply, which breaks the subtraction below
+    stop_schedule["departure_minutes"] = stop_schedule["departure_time"].apply(_parse_gtfs_time).astype("int64")
     reference_minutes = reference_datetime.hour * 60 + reference_datetime.minute
     
     # Handle overnight times: if departure > 24h, it's for "tomorrow" in GTFS terms

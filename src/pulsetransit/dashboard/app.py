@@ -14,7 +14,7 @@ from pulsetransit.dashboard.map import (
     load_trips,
     load_routes,
 )
-from pulsetransit.dashboard.schedules import get_next_departures
+from pulsetransit.dashboard.schedules import get_feed_end_date, get_next_departures
 from pulsetransit.cfg.config import LANG
 
 def render_interactive_map(stops, shapes, trips, routes, highlight_stop_id=None, lang_code='es'):
@@ -79,7 +79,11 @@ def display_stop_schedule(active_stop_id, stops, t):
 
         st.dataframe(display, width='stretch', hide_index=True)
     else:
-        st.info("No upcoming departures found for this stop.")
+        feed_end = get_feed_end_date()
+        if reference_dt.date() > feed_end:
+            st.warning(t["schedule_expired"].format(date=feed_end.strftime("%d/%m/%Y")))
+        else:
+            st.info(t["no_departures"])
 
 # Get language from query params
 query_params = st.query_params
